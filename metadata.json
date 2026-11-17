@@ -1,0 +1,6 @@
+{
+  "name": "Srishti Collection — Artisanal Indian Ethnic Boutique",
+  "description": "Handwoven sarees, Chanderi kurtis, and couture salwar suits crafted by master weavers for Srishti Collection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
