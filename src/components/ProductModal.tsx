@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, MessageCircle, Minus, Phone, Plus, Ruler, ShieldCheck, X } from 'lucide-react';
+import { Check, Heart, MessageCircle, Minus, Phone, Plus, Ruler, ShieldCheck, X } from 'lucide-react';
 import {
   BOUTIQUE_CONTACT,
   Product,
@@ -10,11 +10,19 @@ import { ResilientImage } from './ResilientImage';
 
 interface ProductModalProps {
   product: Product | null;
+  isWishlisted?: boolean;
+  onToggleWishlist?: (product: Product) => void;
   onClose: () => void;
   onAddToCart: (product: Product, size: string, quantity: number) => void;
 }
 
-export function ProductModal({ product, onClose, onAddToCart }: ProductModalProps) {
+export function ProductModal({
+  product,
+  isWishlisted = false,
+  onToggleWishlist,
+  onClose,
+  onAddToCart,
+}: ProductModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -65,24 +73,41 @@ export function ProductModal({ product, onClose, onAddToCart }: ProductModalProp
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#1C1917]/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#1C1917]/60 backdrop-blur-xs animate-backdrop-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="pdp-title"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col md:flex-row"
+        className="relative w-full max-w-4xl bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col md:flex-row animate-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close outfit details"
-          className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-[#FAF9F6]/90 border border-[#E5E0D8] flex items-center justify-center text-[#1C1917] hover:bg-[#F3F1EC] transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          {onToggleWishlist && (
+            <button
+              type="button"
+              onClick={() => onToggleWishlist(product)}
+              aria-pressed={isWishlisted}
+              aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+              className="w-10 h-10 rounded-full bg-[#FAF9F6]/95 border border-[#E5E0D8] flex items-center justify-center text-[#1C1917] hover:bg-[#F3F1EC] transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <Heart
+                className={`w-4 h-4 transition-colors ${
+                  isWishlisted ? 'fill-[#8C1D2D] text-[#8C1D2D] animate-heart-pop' : 'text-[#1C1917]'
+                }`}
+              />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close outfit details"
+            className="w-10 h-10 rounded-full bg-[#FAF9F6]/95 border border-[#E5E0D8] flex items-center justify-center text-[#1C1917] hover:bg-[#F3F1EC] transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Left: High-Resolution Studio Outfit Image */}
         <div className="md:w-1/2 bg-[#F3F1EC] shrink-0 aspect-[3/4] md:aspect-auto md:max-h-[90vh]">
@@ -246,7 +271,7 @@ export function ProductModal({ product, onClose, onAddToCart }: ProductModalProp
 
             <div className="flex items-center gap-2 text-xs text-[#57534E]">
               <ShieldCheck className="w-4 h-4 text-[#8C1D2D] shrink-0" />
-              <span>Imported directly from Kolkata, Jaipur & Surat · Free shipping over ₹5,000</span>
+              <span>Curated directly from Kolkata, Jaipur & Surat · Free shipping over ₹5,000</span>
             </div>
           </div>
         </div>
@@ -255,7 +280,7 @@ export function ProductModal({ product, onClose, onAddToCart }: ProductModalProp
       {/* Kurti & Salwar Suit Size Guide Modal */}
       {showSizeGuide && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-[#1C1917]/65 backdrop-blur-xs"
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-[#1C1917]/65 backdrop-blur-xs animate-backdrop-in"
           role="dialog"
           aria-modal="true"
           aria-labelledby="size-guide-title"
@@ -265,7 +290,7 @@ export function ProductModal({ product, onClose, onAddToCart }: ProductModalProp
           }}
         >
           <div
-            className="w-full max-w-xl bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl shadow-2xl overflow-hidden"
+            className="w-full max-w-xl bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl shadow-2xl overflow-hidden animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 py-4 bg-white border-b border-[#E5E0D8] flex items-center justify-between gap-4">

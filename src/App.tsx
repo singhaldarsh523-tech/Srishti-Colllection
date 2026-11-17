@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Check, Instagram, Lock, MessageCircle, Phone, Search, ShieldCheck, Truck } from 'lucide-react';
+import { ArrowRight, Check, Heart, Instagram, Lock, MessageCircle, Phone, Search, ShieldCheck, Truck } from 'lucide-react';
 import {
   BOUTIQUE_CONTACT,
   HERO_IMAGE,
@@ -22,18 +22,21 @@ import { Navbar } from './components/Navbar';
 import { ResilientImage } from './components/ResilientImage';
 import { ProductModal } from './components/ProductModal';
 import { CartCheckoutDrawer, CartItem } from './components/CartCheckoutDrawer';
+import { WishlistSection } from './components/WishlistSection';
 import { LookbookGallery } from './components/LookbookGallery';
 import { ReviewsSection } from './components/ReviewsSection';
 import { InstagramSection } from './components/InstagramSection';
 import { ContactSection } from './components/ContactSection';
 import { BoutiqueMapSection } from './components/BoutiqueMapSection';
 import { StylistChat } from './components/StylistChat';
+import { Reveal } from './components/Reveal';
 
 type CategoryFilter = 'All' | OutfitCategory;
 type OriginFilter = 'All' | ImportOrigin;
 type SortOrder = 'featured' | 'price-asc' | 'price-desc';
 
 const CART_STORAGE_KEY = 'srishti_collection_cart_v1';
+const WISHLIST_STORAGE_KEY = 'srishti_collection_wishlist_v1';
 const REVIEWS_STORAGE_KEY = 'srishti_collection_reviews_v1';
 
 export default function App() {
@@ -44,7 +47,11 @@ export default function App() {
 
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastState, setToastState] = useState<{
+    message: string;
+    target: 'cart' | 'wishlist';
+  } | null>(null);
+  const [recentlyHeartedId, setRecentlyHeartedId] = useState<string | null>(null);
   const [mapsQuotaExceeded, setMapsQuotaExceeded] = useState(false);
 
   useEffect(() => {
@@ -57,6 +64,17 @@ export default function App() {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
       return saved ? (JSON.parse(saved) as CartItem[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? (parsed as string[]) : [];
     } catch {
       return [];
     }
@@ -81,17 +99,25 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [wishlistIds]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(reviews));
     } catch {
       // Ignore storage quota errors
     }
   }, [reviews]);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
+  const showToast = (message: string, target: 'cart' | 'wishlist' = 'cart') => {
+    setToastState({ message, target });
     setTimeout(() => {
-      setToastMessage((curr) => (curr === msg ? null : curr));
-    }, 2600);
+      setToastState((curr) => (curr?.message === message ? null : curr));
+    }, 2800);
   };
 
   const handleAddToCart = (product: Product, size: string, quantity = 1) => {
@@ -109,7 +135,61 @@ export default function App() {
       }
       return [...prev, { product, size, quantity }];
     });
-    showToast(`Added ${product.name} to your bag`);
+    showToast(`Added ${product.name} to your bag`, 'cart');
+  };
+
+  const handleToggleWishlist = (product: Product) => {
+    const exists = wishlistIds.includes(product.id);
+    if (exists) {
+      setWishlistIds((prev) => prev.filter((id) => id !== product.id));
+      showToast(`Removed ${product.name} from wishlist`, 'wishlist');
+    } else {
+      setWishlistIds((prev) => [product.id, ...prev]);
+      setRecentlyHeartedId(product.id);
+      setTimeout(() => {
+        setRecentlyHeartedId((curr) => (curr === product.id ? null : curr));
+      }, 360);
+      showToast(`Saved ${product.name} to wishlist`, 'wishlist');
+    }
+  };
+
+  const handleClearWishlist = () => {
+    setWishlistIds([]);
+    showToast('Cleared all saved wishlist items', 'wishlist');
+  };
+
+  const wishlistedProducts = useMemo(
+    () =>
+      wishlistIds
+        .map((id) => PRODUCTS.find((p) => p.id === id))
+        .filter((p): p is Product => Boolean(p)),
+    [wishlistIds]
+  );
+
+  const handleAddAllWishlistToCart = () => {
+    if (wishlistedProducts.length === 0) return;
+    setCartItems((prev) => {
+      const next = [...prev];
+      for (const product of wishlistedProducts) {
+        const defaultSize = product.sizes[0] || 'Standard';
+        const idx = next.findIndex(
+          (item) => item.product.id === product.id && item.size === defaultSize
+        );
+        if (idx > -1) {
+          next[idx] = {
+            ...next[idx],
+            quantity: Math.min(10, next[idx].quantity + 1),
+          };
+        } else {
+          next.push({ product, size: defaultSize, quantity: 1 });
+        }
+      }
+      return next;
+    });
+    showToast(
+      `Added ${wishlistedProducts.length} saved ${wishlistedProducts.length === 1 ? 'outfit' : 'outfits'} to your bag`,
+      'cart'
+    );
   };
 
   const handleUpdateQuantity = (productId: string, size: string, delta: number) => {
@@ -194,24 +274,42 @@ export default function App() {
         </div>
       )}
 
-      <Navbar cartCount={totalBagCount} onOpenCart={() => setIsCartOpen(true)} />
+      <Navbar
+        cartCount={totalBagCount}
+        wishlistCount={wishlistedProducts.length}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
 
-      {/* Subtle Toast Confirmation on Add to Bag */}
-      {toastMessage && (
+      {/* Subtle Toast Confirmation on Add to Bag or Wishlist */}
+      {toastState && (
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-5 right-5 z-40 bg-[#1C1917] text-white px-4 py-3 rounded-lg shadow-lg border border-white/10 flex items-center gap-3 text-xs font-medium"
+          className="fixed bottom-5 right-5 z-40 bg-[#1C1917] text-white px-4 py-3 rounded-lg shadow-lg border border-white/10 flex items-center gap-3 text-xs font-medium animate-toast-in"
         >
-          <Check className="w-4 h-4 text-[#9A7B3E] shrink-0" />
-          <span>{toastMessage}</span>
-          <button
-            type="button"
-            onClick={() => setIsCartOpen(true)}
-            className="text-[#FAF9F6] underline underline-offset-2 font-semibold ml-1 cursor-pointer whitespace-nowrap"
-          >
-            View Bag
-          </button>
+          {toastState.target === 'wishlist' ? (
+            <Heart className="w-4 h-4 text-[#8C1D2D] fill-[#8C1D2D] shrink-0" />
+          ) : (
+            <Check className="w-4 h-4 text-[#9A7B3E] shrink-0" />
+          )}
+          <span>{toastState.message}</span>
+          {toastState.target === 'wishlist' ? (
+            <a
+              href="#wishlist"
+              onClick={() => setToastState(null)}
+              className="text-[#FAF9F6] underline underline-offset-2 font-semibold ml-1 whitespace-nowrap"
+            >
+              View Wishlist
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="text-[#FAF9F6] underline underline-offset-2 font-semibold ml-1 cursor-pointer whitespace-nowrap"
+            >
+              View Bag
+            </button>
+          )}
         </div>
       )}
 
@@ -220,7 +318,7 @@ export default function App() {
         <section className="max-w-[1440px] mx-auto px-4 sm:px-8 pt-6 pb-12 sm:pt-10 sm:pb-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
             {/* Left Copy Column */}
-            <div className="lg:col-span-5 flex flex-col justify-center py-4 lg:py-8">
+            <div className="lg:col-span-5 flex flex-col justify-center py-4 lg:py-8 animate-fade-up">
               <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
                 Festive & Bridal Heritage
               </p>
@@ -230,13 +328,13 @@ export default function App() {
               </h1>
 
               <p className="mt-5 text-base leading-relaxed text-[#57534E] max-w-lg">
-                Imported directly from master textile hubs in Kolkata, Jaipur, and Surat. Every Srishti Collection saree, kurti, stitched salwar suit, and unstitched suit set celebrates authentic craftsmanship tailored for modern Indian celebrations.
+                Curated directly from master textile hubs in Kolkata, Jaipur, and Surat. Every Srishti Collection saree, kurti, stitched salwar suit, and unstitched suit set celebrates authentic craftsmanship tailored for modern Indian celebrations.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a
                   href="#collection"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#8C1D2D] hover:bg-[#701522] text-white text-sm font-semibold rounded-md transition-colors duration-150 whitespace-nowrap shrink-0"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#8C1D2D] hover:bg-[#701522] text-white text-sm font-semibold rounded-md transition-all duration-150 hover:-translate-y-0.5 whitespace-nowrap shrink-0"
                 >
                   <span>Shop the Collection</span>
                   <ArrowRight className="w-4 h-4" />
@@ -246,7 +344,7 @@ export default function App() {
                   href={buildWhatsAppUrl('Hello Srishti Collection! I would like to explore your sarees, kurtis, and salwar suits.')}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-3 border border-[#E5E0D8] hover:border-[#15803D] bg-white text-[#1C1917] text-sm font-medium rounded-md transition-colors duration-150 whitespace-nowrap shrink-0"
+                  className="inline-flex items-center gap-2 px-5 py-3 border border-[#E5E0D8] hover:border-[#15803D] bg-white text-[#1C1917] text-sm font-medium rounded-md transition-all duration-150 hover:-translate-y-0.5 whitespace-nowrap shrink-0"
                 >
                   <MessageCircle className="w-4 h-4 text-[#15803D]" />
                   <span>WhatsApp Boutique</span>
@@ -255,17 +353,20 @@ export default function App() {
             </div>
 
             {/* Right Editorial Hero Photography */}
-            <div className="lg:col-span-7 relative rounded-xl overflow-hidden bg-[#F3F1EC] border border-[#E5E0D8] aspect-[16/10] lg:aspect-auto lg:min-h-[480px]">
+            <div
+              style={{ animationDelay: '90ms' }}
+              className="group lg:col-span-7 relative rounded-xl overflow-hidden bg-[#F3F1EC] border border-[#E5E0D8] aspect-[16/10] lg:aspect-auto lg:min-h-[480px] animate-fade-up"
+            >
               <ResilientImage
                 src={HERO_IMAGE}
                 alt="Srishti Collection crimson zari silk saree editorial campaign"
                 fallbackTitle="Suhag Sindoor Zari Silk Saree"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-5 left-5 right-5 flex flex-wrap items-end justify-between gap-4 text-white">
                 <div>
-                  <p className="text-xs text-white/80">Signature Campaign · Imported from Kolkata</p>
+                  <p className="text-xs text-white/80">Signature Campaign · Handwoven in Kolkata</p>
                   <p className="font-display text-2xl font-semibold mt-0.5">
                     Suhag Sindoor Zari Silk Saree
                   </p>
@@ -287,58 +388,61 @@ export default function App() {
           </div>
 
           {/* 4-Column Trust & Craft Strip Below Hero Split */}
-          <div className="mt-10 pt-8 border-t border-[#E5E0D8] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-sm font-semibold text-[#1C1917]">Kolkata, Jaipur & Surat Imports</h2>
-                <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
-                  Directly sourced silk sarees, zardozi suits, and embroidered kurtis.
-                </p>
+          <Reveal delayMs={100}>
+            <div className="mt-10 pt-8 border-t border-[#E5E0D8] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
+                <div>
+                  <h2 className="text-sm font-semibold text-[#1C1917]">Kolkata, Jaipur & Surat Craft</h2>
+                  <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
+                    Directly sourced silk sarees, zardozi suits, and embroidered kurtis.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Truck className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
+                <div>
+                  <h2 className="text-sm font-semibold text-[#1C1917]">Insured Pan-India Delivery</h2>
+                  <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
+                    Complimentary courier dispatch on all orders above ₹5,000.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Lock className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
+                <div>
+                  <h2 className="text-sm font-semibold text-[#1C1917]">Encrypted Checkout</h2>
+                  <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
+                    Pay safely via UPI, Cards, Net Banking, or Cash on Delivery.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Instagram className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
+                <div>
+                  <h2 className="text-sm font-semibold text-[#1C1917]">Bespoke Styling Desk</h2>
+                  <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
+                    Custom saree pre-pleating and tailored kurti sizing available.
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <Truck className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-sm font-semibold text-[#1C1917]">Insured Pan-India Delivery</h2>
-                <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
-                  Complimentary courier dispatch on all orders above ₹5,000.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Lock className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-sm font-semibold text-[#1C1917]">Encrypted Checkout</h2>
-                <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
-                  Pay safely via UPI, Cards, Net Banking, or Cash on Delivery.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Instagram className="w-5 h-5 text-[#8C1D2D] shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-sm font-semibold text-[#1C1917]">Bespoke Styling Desk</h2>
-                <p className="text-xs text-[#57534E] mt-1 leading-relaxed">
-                  Custom saree pre-pleating and tailored kurti sizing available.
-                </p>
-              </div>
-            </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* Main Boutique Catalog Section */}
         <section id="collection" className="py-16 sm:py-20 border-t border-[#E5E0D8] bg-white">
           <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
-              <div>
-                <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
-                  Curated Boutique
-                </p>
-                <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1C1917] mt-2 text-balance">
-                  Sarees, Kurtis, Salwar & Unstitched Suits
-                </h2>
-              </div>
+            <Reveal>
+              <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-10">
+                <div>
+                  <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
+                    Curated Boutique
+                  </p>
+                  <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1C1917] mt-2 text-balance">
+                    Sarees, Kurtis, Salwar & Unstitched Suits
+                  </h2>
+                </div>
 
               {/* Filter Tabs, Search & Sort Controls */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -384,15 +488,15 @@ export default function App() {
 
                 {/* Origin Select */}
                 <select
-                  aria-label="Filter by import city"
+                  aria-label="Filter by craft city"
                   value={selectedOrigin}
                   onChange={(e) => setSelectedOrigin(e.target.value as OriginFilter)}
                   className="px-3 py-2 text-xs font-medium bg-[#FAF9F6] border border-[#E5E0D8] rounded-md text-[#1C1917] focus:outline-none focus:border-[#8C1D2D] min-h-[38px] cursor-pointer"
                 >
                   <option value="All">Origin: All Hubs</option>
-                  <option value="Kolkata">Imported from Kolkata</option>
-                  <option value="Jaipur">Imported from Jaipur</option>
-                  <option value="Surat">Imported from Surat</option>
+                  <option value="Kolkata">Origin: Kolkata</option>
+                  <option value="Jaipur">Origin: Jaipur</option>
+                  <option value="Surat">Origin: Surat</option>
                 </select>
 
                 {/* Sort Select */}
@@ -406,8 +510,22 @@ export default function App() {
                   <option value="price-asc">Price: Low to High</option>
                   <option value="price-desc">Price: High to Low</option>
                 </select>
+
+                {/* View Wishlist Quick Jump */}
+                <a
+                  href="#wishlist"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#1C1917] bg-[#FAF9F6] border border-[#E5E0D8] hover:border-[#8C1D2D] hover:text-[#8C1D2D] rounded-md transition-colors whitespace-nowrap shrink-0 min-h-[38px] tabular-nums"
+                >
+                  <Heart
+                    className={`w-3.5 h-3.5 ${
+                      wishlistedProducts.length > 0 ? 'fill-[#8C1D2D] text-[#8C1D2D]' : 'text-[#8C1D2D]'
+                    }`}
+                  />
+                  <span>View Wishlist ({wishlistedProducts.length})</span>
+                </a>
               </div>
             </div>
+            </Reveal>
 
             {/* 3-Column Product Grid */}
             {filteredProducts.length === 0 ? (
@@ -431,76 +549,117 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredProducts.map((product) => (
-                  <article
-                    key={product.id}
-                    className="group flex flex-col justify-between bg-[#FAF9F6] border border-[#E5E0D8] rounded-lg overflow-hidden transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setActiveProduct(product)}
-                        className="block w-full aspect-[3/4] bg-[#F3F1EC] overflow-hidden cursor-pointer text-left"
-                      >
-                        <ResilientImage
-                          src={product.image}
-                          alt={product.name}
-                          fallbackTitle={product.name}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                        />
-                      </button>
+              <div
+                key={`${selectedCategory}-${selectedOrigin}-${sortOrder}`}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fade-up"
+              >
+                {filteredProducts.map((product) => {
+                  const wishlisted = wishlistIds.includes(product.id);
+                  const popHeart = recentlyHeartedId === product.id;
 
-                      <div className="p-5 pb-3">
-                        {/* Clean Unboxed Metadata */}
-                        <div className="flex items-center gap-2 text-xs text-[#57534E]">
-                          <span>{product.category}</span>
-                          <span aria-hidden="true">·</span>
-                          <span>{product.craftOrigin}</span>
+                  return (
+                    <article
+                      key={product.id}
+                      className="group flex flex-col justify-between bg-[#FAF9F6] border border-[#E5E0D8] rounded-lg overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                    >
+                      <div>
+                        <div className="relative aspect-[3/4] bg-[#F3F1EC] overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setActiveProduct(product)}
+                            className="block w-full h-full cursor-pointer text-left"
+                          >
+                            <ResilientImage
+                              src={product.image}
+                              alt={product.name}
+                              fallbackTitle={product.name}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                            />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleWishlist(product)}
+                            aria-pressed={wishlisted}
+                            aria-label={
+                              wishlisted
+                                ? `Remove ${product.name} from wishlist`
+                                : `Save ${product.name} to wishlist`
+                            }
+                            title={wishlisted ? 'Saved in Wishlist' : 'Save to Wishlist'}
+                            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/95 border border-[#E5E0D8] shadow-xs flex items-center justify-center text-[#1C1917] hover:bg-white transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#8C1D2D]"
+                          >
+                            <Heart
+                              className={`w-4 h-4 transition-colors duration-150 ${
+                                wishlisted
+                                  ? 'fill-[#8C1D2D] text-[#8C1D2D]'
+                                  : 'text-[#57534E] hover:text-[#8C1D2D]'
+                              } ${popHeart ? 'animate-heart-pop' : ''}`}
+                            />
+                          </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setActiveProduct(product)}
-                          className="text-left block w-full mt-1.5 cursor-pointer"
-                        >
-                          <h3 className="text-base font-semibold text-[#1C1917] group-hover:text-[#8C1D2D] transition-colors leading-snug">
-                            {product.name}
-                          </h3>
-                        </button>
-                      </div>
-                    </div>
+                        <div className="p-5 pb-3">
+                          {/* Clean Unboxed Metadata */}
+                          <div className="flex items-center gap-2 text-xs text-[#57534E]">
+                            <span>{product.category}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{product.craftOrigin}</span>
+                          </div>
 
-                    <div className="px-5 pb-5 pt-2 flex items-center justify-between gap-3">
-                      <span className="text-[15px] font-semibold text-[#1C1917] tabular-nums">
-                        {formatINR(product.price)}
-                      </span>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setActiveProduct(product)}
-                          className="px-3 py-2 text-xs font-medium text-[#1C1917] border border-[#E5E0D8] hover:border-[#1C1917] bg-white rounded-md transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleAddToCart(product, product.sizes[0] || 'Standard', 1)
-                          }
-                          className="px-3.5 py-2 text-xs font-semibold text-white bg-[#8C1D2D] hover:bg-[#701522] rounded-md transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          Add to Bag
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveProduct(product)}
+                            className="text-left block w-full mt-1.5 cursor-pointer"
+                          >
+                            <h3 className="text-base font-semibold text-[#1C1917] group-hover:text-[#8C1D2D] transition-colors leading-snug">
+                              {product.name}
+                            </h3>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
+
+                      <div className="px-5 pb-5 pt-2 flex items-center justify-between gap-3">
+                        <span className="text-[15px] font-semibold text-[#1C1917] tabular-nums">
+                          {formatINR(product.price)}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setActiveProduct(product)}
+                            className="px-3 py-2 text-xs font-medium text-[#1C1917] border border-[#E5E0D8] hover:border-[#1C1917] bg-white rounded-md transition-colors cursor-pointer whitespace-nowrap"
+                          >
+                            Details
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleAddToCart(product, product.sizes[0] || 'Standard', 1)
+                            }
+                            className="px-3.5 py-2 text-xs font-semibold text-white bg-[#8C1D2D] hover:bg-[#701522] rounded-md transition-colors cursor-pointer whitespace-nowrap"
+                          >
+                            Add to Bag
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
         </section>
+
+        {/* Saved Favorites — View Wishlist Section */}
+        <WishlistSection
+          items={wishlistedProducts}
+          onSelectProduct={(product) => setActiveProduct(product)}
+          onAddToCart={handleAddToCart}
+          onRemoveFromWishlist={handleToggleWishlist}
+          onAddAllToCart={handleAddAllWishlistToCart}
+          onClearWishlist={handleClearWishlist}
+        />
 
         {/* Lookbook & Outfit Gallery */}
         <LookbookGallery
@@ -537,7 +696,7 @@ export default function App() {
               Srishti Collection
             </p>
             <p className="text-sm text-[#57534E] mt-3 leading-relaxed max-w-sm">
-              Curated sarees, kurtis, salwar suits, and unstitched dress sets imported directly from Kolkata, Jaipur, and Surat textile ateliers.
+              Curated sarees, kurtis, salwar suits, and unstitched dress sets sourced directly from Kolkata, Jaipur, and Surat textile ateliers.
             </p>
           </div>
 
@@ -572,6 +731,9 @@ export default function App() {
               <a href="#collection" className="hover:text-[#1C1917]">
                 Collection
               </a>
+              <a href="#wishlist" className="hover:text-[#1C1917]">
+                Wishlist
+              </a>
               <a href="#gallery" className="hover:text-[#1C1917]">
                 Gallery
               </a>
@@ -598,6 +760,8 @@ export default function App() {
       {/* Product Detail / Quick-View Modal */}
       <ProductModal
         product={activeProduct}
+        isWishlisted={activeProduct ? wishlistIds.includes(activeProduct.id) : false}
+        onToggleWishlist={handleToggleWishlist}
         onClose={() => setActiveProduct(null)}
         onAddToCart={handleAddToCart}
       />

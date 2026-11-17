@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowUpRight, Heart, Instagram, MapPin, X } from 'lucide-react';
 import { InstagramPost, Product, formatINR } from '../data/boutiqueData';
 import { ResilientImage } from './ResilientImage';
+import { Reveal } from './Reveal';
 
 interface InstagramSectionProps {
   posts: InstagramPost[];
@@ -27,30 +28,32 @@ export function InstagramSection({
   return (
     <section id="instagram" className="py-16 sm:py-24 border-t border-[#E5E0D8] bg-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-          <div>
-            <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
-              Social Journal
-            </p>
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1C1917] mt-2 text-balance">
-              Live From @srishticollection.boutique
-            </h2>
-            <p className="text-sm text-[#57534E] mt-2 max-w-xl">
-              Festive styling notes, loom stories, and new drop previews. Click any post to shop the featured saree, kurti, or salwar suit directly.
-            </p>
-          </div>
+        <Reveal>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+              <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
+                Social Journal
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1C1917] mt-2 text-balance">
+                Live From @srishticollection.boutique
+              </h2>
+              <p className="text-sm text-[#57534E] mt-2 max-w-xl">
+                Festive styling notes, loom stories, and new drop previews. Click any post to shop the featured saree, kurti, or salwar suit directly.
+              </p>
+            </div>
 
-          <a
-            href="https://instagram.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-[#1C1917] border border-[#E5E0D8] hover:border-[#1C1917] rounded-md transition-colors self-start md:self-auto whitespace-nowrap shrink-0 min-h-[40px]"
-          >
-            <Instagram className="w-4 h-4 text-[#8C1D2D]" />
-            <span>Follow @srishticollection.boutique</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
-        </div>
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-[#1C1917] border border-[#E5E0D8] hover:border-[#1C1917] rounded-md transition-colors self-start md:self-auto whitespace-nowrap shrink-0 min-h-[40px]"
+            >
+              <Instagram className="w-4 h-4 text-[#8C1D2D]" />
+              <span>Follow @srishticollection.boutique</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </Reveal>
 
         {/* 4-Column Shoppable Instagram Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -62,7 +65,7 @@ export function InstagramSection({
             return (
               <div
                 key={post.id}
-                className="group border border-[#E5E0D8] rounded-lg overflow-hidden bg-[#FAF9F6] flex flex-col"
+                className="group border border-[#E5E0D8] rounded-lg overflow-hidden bg-[#FAF9F6] flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
               >
                 <button
                   type="button"
@@ -128,14 +131,14 @@ export function InstagramSection({
       {/* Instagram Post Modal */}
       {activePost && (
         <div
-          className="fixed inset-0 z-50 bg-[#1C1917]/65 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#1C1917]/65 backdrop-blur-xs flex items-center justify-center p-4 animate-backdrop-in"
           role="dialog"
           aria-modal="true"
           aria-label="Instagram Post Details"
           onClick={() => setActivePost(null)}
         >
           <div
-            className="w-full max-w-3xl bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2"
+            className="w-full max-w-3xl bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2 animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="aspect-[3/4] bg-[#F3F1EC]">

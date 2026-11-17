@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Expand, X } from 'lucide-react';
 import { Product, formatINR } from '../data/boutiqueData';
 import { ResilientImage } from './ResilientImage';
+import { Reveal } from './Reveal';
 
 interface LookbookGalleryProps {
   products: Product[];
@@ -42,54 +43,58 @@ export function LookbookGallery({ products, onSelectProduct }: LookbookGalleryPr
   return (
     <section id="gallery" className="py-16 sm:py-24 border-t border-[#E5E0D8] bg-[#F3F1EC]/55">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-          <div>
-            <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
-              Editorial Lookbook
+        <Reveal>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+              <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
+                Editorial Lookbook
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1C1917] mt-2 text-balance">
+                Silhouette & Loom Gallery
+              </h2>
+            </div>
+            <p className="text-sm text-[#57534E] max-w-md leading-relaxed">
+              Inspect the drape, zari border precision, and hand-embroidered details across our signature sarees, kurtis, and salwar suits.
             </p>
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1C1917] mt-2 text-balance">
-              Silhouette & Loom Gallery
-            </h2>
           </div>
-          <p className="text-sm text-[#57534E] max-w-md leading-relaxed">
-            Inspect the drape, zari border precision, and hand-embroidered details across our signature sarees, kurtis, and salwar suits.
-          </p>
-        </div>
+        </Reveal>
 
         {/* Asymmetric Editorial Photo Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {galleryItems.map((item, idx) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setLightboxIndex(idx)}
-              className="group relative aspect-[3/4] bg-[#F3F1EC] rounded-lg overflow-hidden border border-[#E5E0D8] text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-[#8C1D2D]"
-            >
-              <ResilientImage
-                src={item.image}
-                alt={`${item.name} gallery portrait`}
-                fallbackTitle={item.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
-              <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 text-[#1C1917] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Expand className="w-3.5 h-3.5" />
-              </div>
-              <div className="absolute bottom-3 left-3 right-3 text-white">
-                <p className="text-[11px] text-white/80 truncate">{item.craftOrigin}</p>
-                <p className="text-xs font-semibold leading-snug line-clamp-2 mt-0.5">
-                  {item.name}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
+        <Reveal delayMs={80}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {galleryItems.map((item, idx) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setLightboxIndex(idx)}
+                className="group relative aspect-[3/4] bg-[#F3F1EC] rounded-lg overflow-hidden border border-[#E5E0D8] text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-[#8C1D2D] transition-transform duration-200 hover:-translate-y-1 hover:shadow-md"
+              >
+                <ResilientImage
+                  src={item.image}
+                  alt={`${item.name} gallery portrait`}
+                  fallbackTitle={item.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
+                <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 text-[#1C1917] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Expand className="w-3.5 h-3.5" />
+                </div>
+                <div className="absolute bottom-3 left-3 right-3 text-white">
+                  <p className="text-[11px] text-white/80 truncate">{item.craftOrigin}</p>
+                  <p className="text-xs font-semibold leading-snug line-clamp-2 mt-0.5">
+                    {item.name}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Reveal>
       </div>
 
       {/* Fullscreen Lightbox Viewer */}
       {activeItem && lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-50 bg-[#1C1917]/90 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#1C1917]/90 backdrop-blur-xs flex items-center justify-center p-4 animate-backdrop-in"
           role="dialog"
           aria-modal="true"
           aria-label="Gallery Lightbox"
@@ -99,7 +104,7 @@ export function LookbookGallery({ products, onSelectProduct }: LookbookGalleryPr
             type="button"
             onClick={() => setLightboxIndex(null)}
             aria-label="Close gallery lightbox"
-            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
+            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -113,13 +118,13 @@ export function LookbookGallery({ products, onSelectProduct }: LookbookGalleryPr
               );
             }}
             aria-label="Previous outfit"
-            className="hidden sm:flex w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center mr-4 cursor-pointer shrink-0"
+            className="hidden sm:flex w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center mr-4 cursor-pointer shrink-0 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
           <div
-            className="max-w-3xl w-full bg-[#FAF9F6] rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-2 shadow-2xl"
+            className="max-w-3xl w-full bg-[#FAF9F6] rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-2 shadow-2xl animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="aspect-[3/4] bg-[#F3F1EC]">

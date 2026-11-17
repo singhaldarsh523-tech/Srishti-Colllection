@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Star } from 'lucide-react';
 import { Product, Review } from '../data/boutiqueData';
+import { Reveal } from './Reveal';
 
 interface ReviewsSectionProps {
   reviews: Review[];
@@ -50,7 +51,8 @@ export function ReviewsSection({ reviews, products, onAddReview }: ReviewsSectio
   return (
     <section id="reviews" className="py-16 sm:py-24 border-t border-[#E5E0D8] bg-[#FAF9F6]">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <Reveal>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <p className="text-xs font-medium tracking-widest uppercase text-[#8C1D2D]">
               Patron Chronicles
@@ -78,6 +80,7 @@ export function ReviewsSection({ reviews, products, onAddReview }: ReviewsSectio
             {showForm ? 'Close Review Form' : 'Write a Review'}
           </button>
         </div>
+        </Reveal>
 
         {submittedNote && (
           <div className="mb-6 p-4 bg-white border border-[#E5E0D8] rounded-lg text-sm text-[#1C1917]">
@@ -188,12 +191,13 @@ export function ReviewsSection({ reviews, products, onAddReview }: ReviewsSectio
         )}
 
         {/* Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {reviews.map((review) => (
-            <article
-              key={review.id}
-              className="p-6 sm:p-7 bg-white border border-[#E5E0D8] rounded-lg flex flex-col justify-between gap-5"
-            >
+        <Reveal delayMs={80}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {reviews.map((review) => (
+              <article
+                key={review.id}
+                className="p-6 sm:p-7 bg-white border border-[#E5E0D8] rounded-lg flex flex-col justify-between gap-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+              >
               <div>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-1 text-[#9A7B3E]">
@@ -220,7 +224,8 @@ export function ReviewsSection({ reviews, products, onAddReview }: ReviewsSectio
               </div>
             </article>
           ))}
-        </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -25,7 +25,7 @@ export function StylistChat() {
     {
       id: 'welcome-msg',
       role: 'model',
-      text: 'Namaste! Welcome to Srishti Collection. Ask me about our Sarees, Kurtis, Salwar Suits, Unstitched Suits imported from Kolkata, Jaipur & Surat, or sizing in inches.',
+      text: 'Namaste! Welcome to Srishti Collection. Ask me about our Sarees, Kurtis, Salwar Suits, Unstitched Suits sourced from Kolkata, Jaipur & Surat, or sizing in inches.',
     },
   ]);
 
@@ -115,7 +115,7 @@ export function StylistChat() {
         <div
           role="dialog"
           aria-label="Srishti Collection Stylist Chat"
-          className="fixed bottom-5 left-5 right-5 sm:right-auto sm:w-[390px] h-[520px] max-h-[82vh] z-50 bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl shadow-2xl flex flex-col overflow-hidden"
+          className="fixed bottom-5 left-5 right-5 sm:right-auto sm:w-[390px] h-[520px] max-h-[82vh] z-50 bg-[#FAF9F6] border border-[#E5E0D8] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-chat-in"
         >
           {/* Chat Header */}
           <div className="px-4 py-3 bg-[#1C1917] text-white flex items-center justify-between gap-3">

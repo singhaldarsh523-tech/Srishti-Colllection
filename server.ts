@@ -31,7 +31,7 @@ Core boutique facts you must stick to accurately:
   2. Kurtis (Block-print silk, Kantha tussar, Bandhani straight kurtis, Gota-patti A-line, Kasab embroidered, Chikankari/floral)
   3. Salwar Suits (24-panel Zardozi Anarkali, Patiala salwar suit, Jamdani palazzo suit, Zari straight cigarette suit, Mirror-work Sharara, Silk Angarkha)
   4. Unstitched Suits (3-piece dress material sets with kurta length, salwar fabric, and dupatta in Jamdani, Zari silk, Sanganeri Kota-Doria, Bandhej, and Tussar)
-- Every product is imported directly from master weaving & embroidery hubs in Kolkata, Jaipur, and Surat.
+- Every product is sourced directly from master weaving & embroidery hubs in Kolkata, Jaipur, and Surat.
 - Standard Kurti & Salwar Suit sizing (inches):
   XS (Bust 34", Waist 28", Hip 36"), S (36", 30", 38"), M (38", 32", 40"), L (40", 34", 42"), XL (42", 36", 44").
   Unstitched Suits include generous 2.5m kurta + 2.5m salwar + 2.4m dupatta fabric lengths.

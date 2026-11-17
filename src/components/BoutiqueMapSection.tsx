@@ -154,7 +154,7 @@ export function BoutiqueMapSection() {
               Visit Our Kanpur Boutique & Craft Hubs
             </h2>
             <p className="text-sm text-[#57534E] mt-2 max-w-2xl">
-              Visit Srishti Collection in Kidwai Nagar, Kanpur, or explore our three direct textile import hubs in Kolkata, Jaipur, and Surat.
+              Visit Srishti Collection in Kidwai Nagar, Kanpur, or explore our three artisan textile hubs in Kolkata, Jaipur, and Surat.
             </p>
           </div>
 

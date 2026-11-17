@@ -60,7 +60,7 @@ export function ContactSection({ products }: ContactSectionProps) {
                 Connect Directly on WhatsApp or Phone
               </h2>
               <p className="mt-4 text-sm sm:text-[15px] leading-relaxed text-[#57534E]">
-                Need live fabric videos, custom salwar measurements, or bulk bridal styling? Reach Srishti Collection directly—every saree, kurti, and salwar suit is curated and imported from our partner weavers in Kolkata, Jaipur, and Surat.
+                Need live fabric videos, custom salwar measurements, or bulk bridal styling? Reach Srishti Collection directly—every saree, kurti, and salwar suit is curated directly from our partner weavers in Kolkata, Jaipur, and Surat.
               </p>
 
               {/* Phone & WhatsApp Direct Cards */}

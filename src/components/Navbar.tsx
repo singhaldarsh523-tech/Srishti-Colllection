@@ -1,19 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, ShoppingBag, X } from 'lucide-react';
 
 interface NavbarProps {
   cartCount: number;
+  wishlistCount: number;
   onOpenCart: () => void;
 }
 
-export function Navbar({ cartCount, onOpenCart }: NavbarProps) {
+export function Navbar({ cartCount, wishlistCount, onOpenCart }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [bagBump, setBagBump] = useState(false);
+
+  useEffect(() => {
+    if (cartCount === 0) return;
+    setBagBump(true);
+    const timer = setTimeout(() => setBagBump(false), 300);
+    return () => clearTimeout(timer);
+  }, [cartCount]);
 
   const navLinks = [
     { label: 'Collection', href: '#collection' },
+    {
+      label: wishlistCount > 0 ? `Wishlist (${wishlistCount})` : 'Wishlist',
+      href: '#wishlist',
+    },
     { label: 'Gallery', href: '#gallery' },
     { label: 'Reviews', href: '#reviews' },
-    { label: 'Instagram', href: '#instagram' },
     { label: 'Contact', href: '#contact' },
   ];
 
@@ -37,9 +49,13 @@ export function Navbar({ cartCount, onOpenCart }: NavbarProps) {
             <a
               key={link.href}
               href={link.href}
-              className="hover:text-[#1C1917] transition-colors duration-150 whitespace-nowrap shrink-0 py-1 border-b border-transparent hover:border-[#8C1D2D]"
+              className="group relative hover:text-[#1C1917] transition-colors duration-150 whitespace-nowrap shrink-0 py-1 tabular-nums"
             >
-              {link.label}
+              <span>{link.label}</span>
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 bottom-0 h-[1.5px] bg-[#8C1D2D] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out"
+              />
             </a>
           ))}
         </nav>
@@ -50,7 +66,9 @@ export function Navbar({ cartCount, onOpenCart }: NavbarProps) {
             type="button"
             onClick={onOpenCart}
             aria-label={`Open shopping bag with ${cartCount} items`}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-wide text-white bg-[#8C1D2D] hover:bg-[#701522] rounded-md transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer min-h-[40px]"
+            className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-wide text-white bg-[#8C1D2D] hover:bg-[#701522] rounded-md transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer min-h-[40px] ${
+              bagBump ? 'animate-bag-bump' : ''
+            }`}
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Bag</span>
@@ -73,14 +91,14 @@ export function Navbar({ cartCount, onOpenCart }: NavbarProps) {
       {mobileMenuOpen && (
         <nav
           aria-label="Mobile Navigation"
-          className="md:hidden border-t border-[#E5E0D8] bg-[#FAF9F6] px-4 py-4 flex flex-col gap-3"
+          className="md:hidden animate-fade-up border-t border-[#E5E0D8] bg-[#FAF9F6] px-4 py-4 flex flex-col gap-3"
         >
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="text-base font-medium text-[#1C1917] py-2 border-b border-[#E5E0D8]/60 last:border-b-0"
+              className="text-base font-medium text-[#1C1917] py-2 border-b border-[#E5E0D8]/60 last:border-b-0 tabular-nums"
             >
               {link.label}
             </a>

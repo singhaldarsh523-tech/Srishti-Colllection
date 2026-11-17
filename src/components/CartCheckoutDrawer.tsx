@@ -161,14 +161,14 @@ export function CartCheckoutDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-[#1C1917]/55 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex justify-end bg-[#1C1917]/55 backdrop-blur-xs animate-backdrop-in"
       role="dialog"
       aria-modal="true"
       aria-label="Shopping Bag and Secure Checkout"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-[#FAF9F6] h-full shadow-2xl border-l border-[#E5E0D8] flex flex-col"
+        className="w-full max-w-lg bg-[#FAF9F6] h-full shadow-2xl border-l border-[#E5E0D8] flex flex-col animate-drawer-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
